@@ -1,0 +1,19 @@
+{
+    "name": "easy/mipush",
+    "description": "easy to use mipush parallelly",
+    "authors": [
+        {
+            "name": "TIGERB",
+            "email": "tigerbcode@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mipush\\": "/"
+        }
+    },
+}

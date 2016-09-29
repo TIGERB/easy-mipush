@@ -1,6 +1,8 @@
 <?php
+namespace Mipush;
+
 /**
- * easy to use mipush
+ * easy to use mipush parallelly
  * version 0.1.0
  * author: TIGERB <https://github.com/TIGERB>
  * description: 目前只实现了按regid,alias(别名),user_account(用户账号),topic(标签), multi_topic(多标签),all(全体)推送
