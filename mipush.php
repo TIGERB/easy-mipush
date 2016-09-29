@@ -1,17 +1,19 @@
 <?php
 /**
  * easy to use mipush
- * version 0.0.1
- * author: TIGERB <http://tigerb.cn>
- * descritp: 目前只实现了按alias(别名),user_account(用户账号),topic(标签), multi_topic(多标签),all(全体)推送
+ * version 0.1.0
+ * author: TIGERB <https://github.com/TIGERB>
+ * description: 目前只实现了按regid,alias(别名),user_account(用户账号),topic(标签), multi_topic(多标签),all(全体)推送
+ * date: 2016-09-28
  */
 
-// 使用示例
+// -----------------------------------------------------------------------------------------------------------------------------
+// 使用示例：
 // require('./mipush.php');
 // try {
 // 	Push::init(
 // 		['secret' => 'string,必传,ios密钥'], 
-// 		['secret' => 'string,必传,android密钥', 'package_name' => 'string,必传,android包名']
+// 		['secret' => 'string,必传,android密钥', 'package_name' => 'string,必传,android包名'],
 // 		[	
 // 		  'title'    	 => 'string,非必传,消息通知自定义title',
 // 		  'pass_through' => 'int,非必传,0通知栏消息,1透传,默认0',
@@ -25,6 +27,29 @@
 // } catch (Exception $e) {
 // 	echo $e->getMessage();
 // }
+// 
+// this is a example:
+// try {
+// 	Push::init(
+// 		['secret' => ''], 
+// 		['secret' => '', 'package_name' => 'com.test'],
+// 		[	
+// 		  'title'    	 => 'test',
+// 		  'pass_through' => 0,
+// 		  'notify_type'  => -1,
+// 		  'time_to_send' => 0,
+// 		],
+// 		'develop'
+// 		);	
+// 	$res = Push::toUse('userAccount', [
+// 			'user_account' => [1],
+// 			'description'  => 'test'
+// 		]);
+// 	echo json_encode($res, JSON_UNESCAPED_UNICODE);
+// } catch (Exception $e) {
+// 	echo $e->getMessage();
+// }
+// -----------------------------------------------------------------------------------------------------------------------------
 
 
 /**
@@ -79,11 +104,34 @@ class Mipush
 	// const get_all_aliases                  = '/v1/alias/all';
 	// const get_all_topics                   = '/v1/topic/all';
 
+	/**
+	 * 小米推送接口信息定义
+	 * 
+	 * url/请求参数
+	 * @var array
+	 */
 	private $_functionDefine = [
+		'regid' => [
+			'uri' => 'v3/message/regid',
+			'arguments' => [
+				'registration_id' => [
+					'type' => 'array',
+					'must' => 'y'
+				],
+				'description' => [
+					'type' => 'string',
+					'must' => 'y'
+				],
+				'params' => [//自定义参数
+					'type' => 'array',
+					'must' => 'n'
+				],
+			]
+		],
 		'userAccount' => [
 			'uri' => 'v2/message/user_account',
 			'arguments' => [
-				'accounts' => [
+				'user_account' => [
 					'type' => 'array',
 					'must' => 'y'
 				],
@@ -100,7 +148,7 @@ class Mipush
 		'alias' => [
 			'uri' => 'v3/message/alias',
 			'arguments' => [
-				'aliases' => [
+				'alias' => [
 					'type' => 'array',
 					'must' => 'y'
 				],
@@ -117,7 +165,7 @@ class Mipush
 		'topic' => [
 			'uri' => 'v3/message/topic',
 			'arguments' => [
-				'accounts' => [
+				'topics' => [
 					'type' => 'array',
 					'must' => 'y'
 				],
@@ -138,7 +186,7 @@ class Mipush
 					'type' => 'array',
 					'must' => 'y'
 				],
-				'topics_op' => [
+				'topics_op' => [// UNION并集，INTERSECTION交集，EXCEPT差集
 					'type' => 'string',
 					'must' => 'y'
 				],
@@ -205,101 +253,80 @@ class Mipush
 		}
 	}
 
+	/**
+	 * 请求参数校验
+	 * 
+	 * @param  array  $arguments 请求参数
+	 * @return mixed  void||object
+	 */
 	private function dataCheck($arguments=array())
 	{
 		foreach ($this->_function['arguments'] as $k => $v) {
 			if ($v['must'] === 'y' && !$arguments[$k]) {
-				throw new \Exception("$k is must argument", 500);
+				throw new \Exception("$k is must argument", 400);
 			}
 			if ($arguments[$k] && gettype($arguments[$k]) !== $v['type']) {
-				throw new \Exception("$k type is $v", 500);
+				throw new \Exception("$k type is $v", 400);
 			}
 		}
 		
 	}
 
+	/**
+	 * 魔法方法
+	 * 获取类属性
+	 * 
+	 * @param  string $name 类属型名称
+	 * @return mixed       
+	 */
 	public function __get($name='')
 	{
 		return $this->$name;
 	}
 
-	public function userAccount($arguments=array())
+	/**
+	 * 魔术方法
+	 * 
+	 * 重载对象方法
+	 * @param  string $name      小米推送方法名称
+	 * @param  array  $arguments 请求参数
+	 * @return mixed             void||object
+	 */
+	public function __call($name,$arguments)
 	{
-		$this->_function = $this->_functionDefine[__FUNCTION__];
+		$arguments = $arguments[0];
+		$this->_function = $this->_functionDefine[$name];
 		$this->_url = $this->_host . $this->_function['uri'];
 		$this->dataCheck($arguments);
-		$this->_data['user_account'] = implode(',', $arguments['accounts']);
-		$this->_data['description']  = $arguments['description'];
-		if($arguments['params']) {
-			foreach ($arguments['params'] as $k => $v) {
-				$this->_data['extra.'.$k] = $v;// 自定义参数
-			}
-		}
-		if ($this->_osType === 'android') {
-			$this->_data = array_merge($this->_data, $this->_options);
-		}
-	}
 
-	public function alias($arguments=array()) 
-	{
-		$this->_function = $this->_functionDefine[__FUNCTION__];
-		$this->_url = $this->_host . $this->_function['uri'];
-		$this->dataCheck($arguments);
-		$this->_data['alias'] = implode(',', $arguments['aliases']);
+		switch ($name) {
+			case 'regid':
+				$this->_data['registration_id'] = $arguments['registration_id'];
+				break;
+			case 'userAccount':
+				$this->_data['user_account'] = implode(',', $arguments['user_account']);
+				break;
+			case 'alias':
+				$this->_data['alias']        = implode(',', $arguments['alias']);
+				break;
+			case 'topic':
+				$this->_data['topic']        = $arguments['topic'];
+				break;
+			case 'multiTopic':
+				$this->_data['topics']       = implode(";$;", $arguments['topics']);
+				$this->_data['topic_op']     = $arguments['topic_op'];
+				break;
+			case 'all':
+				$this->_data['topics']       = implode(";$;", $topics);
+				$this->_data['topic_op']     = 'UNION';
+				break;
+				
+				default:
+				throw new \Exception('Sorry, This function is useless in this version', 404);
+				break;
+		}
+
 		$this->_data['description']  = $arguments['description'];
-		if($arguments['params']) {
-			foreach ($arguments['params'] as $k => $v) {
-				$this->_data['extra.'.$k] = $v;// 自定义参数
-			}
-		}
-		if ($this->_osType === 'android') {
-			$this->_data = array_merge($this->_data, $this->_options);
-		}
-	}
-	
-	public function topic($arguments=array())
-	{
-		$this->_function = $this->_functionDefine[__FUNCTION__];
-		$this->_url = $this->_host . $this->_function['uri'];
-		$this->dataCheck($arguments);
-		$this->_data['topic'] = $arguments['topic'];
-		$this->_data['description']  = $arguments['description'];
-		if($arguments['params']) {
-			foreach ($arguments['params'] as $k => $v) {
-				$this->_data['extra.'.$k] = $v;// 自定义参数
-			}
-		}
-		if ($this->_osType === 'android') {
-			$this->_data = array_merge($this->_data, $this->_options);
-		}
-	}
-	
-	public function multiTopic($arguments=array())
-	{
-		$this->_function = $this->_functionDefine[__FUNCTION__];
-		$this->_url = $this->_host . $this->_function['uri'];
-		$this->dataCheck($arguments);
-		$this->_data['topics']      = implode(";$;", $arguments['topics']);
-		$this->_data['topic_op']    = $arguments['topic_op'];
-		$this->_data['description'] = $arguments['description'];
-		if($arguments['params']) {
-			foreach ($arguments['params'] as $k => $v) {
-				$this->_data['extra.'.$k] = $v;// 自定义参数
-			}
-		}
-		if ($this->_osType === 'android') {
-			$this->_data = array_merge($this->_data, $this->_options);
-		}
-	}
-	
-	public function all($description='', $params=array())
-	{
-		$this->_function = $this->_functionDefine[__FUNCTION__];
-		$this->_url = $this->_host . $this->_function['uri'];
-		$this->dataCheck($arguments);
-		$this->_data['topics']      = implode(";$;", $topics);
-		$this->_data['topic_op']    = 'UNION';
-		$this->_data['description'] = $arguments['description'];
 		if($arguments['params']) {
 			foreach ($arguments['params'] as $k => $v) {
 				$this->_data['extra.'.$k] = $v;// 自定义参数
@@ -313,19 +340,44 @@ class Mipush
 }
 
 /**
- * 推送小米实体 
+ * 推送小米实体
  */
 class Push
 {
+	/**
+	 * ios推送实体
+	 * @var object
+	 */
 	private static $_ios;
+
+	/**
+	 * android推送实体
+	 * @var object
+	 */
 	private static $_android;
 
+	/**
+	 * 初始化推送实体
+	 * 
+	 * @param  array  $ios_auth     ios鉴权信息
+	 * @param  array  $android_auth android鉴权信息
+	 * @param  array  $options      推送设置
+	 * @param  string $environment  推送环境:develop开发环境，product生产环境
+	 * @return void               
+	 */
 	public static function init($ios_auth=array(), $android_auth=array(), $options=array(), $environment='')
 	{
 		self::$_ios 	= new Mipush('ios', $ios_auth, $options, $environment);
 		self::$_android = new Mipush('android', $android_auth, $options, $environment);
 	}
 
+	/**
+	 * 调用小米推送接口
+	 * 
+	 * @param  string $function_name 接口名称
+	 * @param  array  $arguments     请求参数
+	 * @return array                 响应结果
+	 */
 	public function toUse($function_name='', $arguments=array())
 	{
 		self::$_ios->$function_name($arguments);
@@ -333,7 +385,15 @@ class Push
 		return self::curlRequest(self::$_ios, self::$_android);
 	}
 
-	private static function curlRequest(Mipush $mipush_ios, Mipush $mipush_android) {
+	/**
+	 * 并行推送
+	 * 
+	 * @param  Mipush $mipush_ios     ios端实体
+	 * @param  Mipush $mipush_android android端实体
+	 * @return array                  推送结果
+	 */
+	private static function curlRequest(Mipush $mipush_ios, Mipush $mipush_android) 
+	{
 		$ch_ios     = curl_init();
 		$ch_android = curl_init();
 		curl_setopt($ch_ios, CURLOPT_URL, $mipush_ios->_url);

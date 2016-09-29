@@ -1,14 +1,14 @@
 # mipush
 easy to use mipush parallelly
 并行的小米sdk
-Version 0.0.1
+Version 0.1.0
 
 ### intro
 - 调用一次同时推送给ios&android两种设备，不用分别推送
 - 简化使用
     + 初始化设置Push:init('ios设置','android设置','通用设置','使用环境')
     + 调用推送方法Push::toUse('小米push接口名','接口参数')
-- 目前只实现了按alias(别名),user_account(用户账号),topic(标签), multi_topic(多标签),all(全体)推送
+- 目前只实现了按regid(登记id),alias(别名),user_account(用户账号),topic(标签), multi_topic(多标签),all(全体)推送
 
 ### how to use?
 ```
@@ -34,11 +34,14 @@ try {
 
 使用示例：
 try {
-    Push::init(['secret' => '111'], ['secret' => '111', 'package_name' => 'cn.tigerb']);    
+    Push::init(
+        ['secret' => '111'], 
+        ['secret' => '111', 'package_name' => 'cn.tigerb']
+        );    
     $res = Push::toUse('userAccount', [
-        'accounts' => [1000], 
+        'accounts'    => [1000], 
         'description' => 'test',
-        'params' => ['link' => 'http://tigerb.cn']
+        'params'      => ['link' => 'http://tigerb.cn']
         ]);
     echo json_encode($res, JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
