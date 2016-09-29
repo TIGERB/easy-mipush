@@ -12,8 +12,9 @@ Version 0.1.0
 
 ### how to use?
 ```
+composer require tigerb/easy-mipush
+
 使用格式：
-require('./mipush.php');
 try {
     Push::init(
         ['secret' => 'string,必传,ios密钥'], 
