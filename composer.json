@@ -16,10 +16,10 @@
         }
     },
     "keywords": [
-        "mipush",
+        "mipush"
     ],
     "homepage": "http://tiegrb.cn/",
-    "license": "Apache-2.0",
+    "license": "MIT",
     "minimum-stability": "stable",
     "config": {
         "preferred-install": "dist"
