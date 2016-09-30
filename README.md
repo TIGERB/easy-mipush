@@ -34,15 +34,25 @@ try {
 }
 
 使用示例：
+use Mipush\Push;
+
+require './vendor/autoload.php';
+
 try {
     Push::init(
-        ['secret' => '111'], 
-        ['secret' => '111', 'package_name' => 'cn.tigerb']
-        );    
+        ['secret' => 'test'], 
+        ['secret' => 'test', 'package_name' => 'com.test'],
+        [   
+          'title'        => 'test',
+          'pass_through' => 0,
+          'notify_type'  => -1,
+          'time_to_send' => 0,
+        ],
+        'develop'
+        );  
     $res = Push::toUse('userAccount', [
-        'accounts'    => [1000], 
-        'description' => 'test',
-        'params'      => ['link' => 'http://tigerb.cn']
+            'user_account' => [1],
+            'description'  => 'test'
         ]);
     echo json_encode($res, JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
