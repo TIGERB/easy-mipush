@@ -327,6 +327,7 @@ class Mipush
 				break;
 		}
 
+		$this->_data['title']  = $arguments['title'];
 		$this->_data['description']  = $arguments['description'];
 		if($arguments['params']) {
 			foreach ($arguments['params'] as $k => $v) {
