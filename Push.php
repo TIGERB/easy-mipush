@@ -42,7 +42,7 @@ class Push
 	 * @param  array  $arguments     请求参数
 	 * @return array                 响应结果
 	 */
-	public function toUse($function_name='', $arguments=array())
+	public static function toUse($function_name='', $arguments=array())
 	{
 		self::$_ios->$function_name($arguments);
 		self::$_android->$function_name($arguments);
