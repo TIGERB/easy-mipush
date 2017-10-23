@@ -318,7 +318,7 @@ class Mipush
 				$this->_data['topic_op']     = $arguments['topic_op'];
 				break;
 			case 'all':
-				$this->_data['topics']       = implode(";$;", $topics);
+				$this->_data['topics']       = implode(";$;", $arguments['topics']);
 				$this->_data['topic_op']     = 'UNION';
 				break;
 				
@@ -327,7 +327,7 @@ class Mipush
 				break;
 		}
 
-		$this->_data['title']  = $arguments['title'];
+        $this->_data['title']  = $this->_options['title'];
 		$this->_data['description']  = $arguments['description'];
 		if($arguments['params']) {
 			foreach ($arguments['params'] as $k => $v) {
